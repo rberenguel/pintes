@@ -6,5 +6,5 @@ Otherwise, you can open this in https://mostlymaths.net/pintes/
 
 ---
 
-- [LLM Stuff](https://rberenguel.github.io/pintes/LLM%20stuff.html)
+- [LLM Stuff](https://rberenguel.github.io/pintes/LLM-stuff.html)
 - 
