@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pinta Diagram Export</title>
+  <style>
+    /* Embedded CSS from style.css */
+    :root {
+  --base03: #002b36;
+  --base02: #073642;
+  --base01: #586e75;
+  --base00: #657b83;
+  --base0: #839496;
+  --base1: #93a1a1;
+
+  --yellow: #b58900;
+  --orange: #cb4b16;
+  --red: #dc322f;
+  --magenta: #d33682;
+  --violet: #6c71c4;
+  --blue: #268bd2;
+  --black: #000000;
+  --white: #eee;
+  --cyan: #2aa198;
+  --green: #859900;
+
+  --postit-white-bg: #fdf6e3;
+  --postit-white-text: #586e75;
+  --postit-transp-bg: #99999922;
+  --theme-main-background: var(--base03);
+  --theme-editor-background: var(--base02);
+  --theme-primary-text: var(--base1);
+  --theme-secondary-text: var(--base01);
+  --theme-border-color: var(--base01);
+
+  --theme-schema-line-color: var(--orange);
+  --theme-schema-text-color: var(--cyan);
+
+  --theme-modal-background: var(--base02);
+  --theme-modal-overlay-bg: rgba(0, 0, 0, 0.75);
+  --theme-modal-text-primary: var(--base1);
+  --theme-modal-text-secondary: var(--base0);
+  --theme-modal-button-confirm-bg: var(--red);
+  --theme-modal-button-confirm-text: var(--base03);
+  --theme-modal-button-cancel-bg: var(--base01);
+  --theme-modal-button-cancel-text: var(--base03);
+  --theme-modal-button-cancel-hover-bg: var(--base00);
+
+  --theme-postit-yellow-text: var(--base03);
+  --theme-postit-red-text: var(--base03);
+  --theme-postit-green-text: var(--base03);
+  --theme-postit-blue-text: var(--base03);
+  --theme-postit-white-text: var(--postit-white-text);
+  --theme-postit-transp-text: var(--yellow);
+
+  --theme-postit-yellow-drag-handle: var(--base02);
+  --theme-postit-red-drag-handle: var(--base03);
+  --theme-postit-green-drag-handle: var(--base02);
+  --theme-postit-blue-drag-handle: var(--base03);
+  --theme-postit-white-drag-handle: var(--base01);
+}
+
+/* CSS-Only Theme Toggle for Static Export === */
+
+#theme-toggle-export {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  top: 0.5em;
+}
+
+/* The visible toggle switch label */
+.theme-toggle-label {
+  cursor: pointer;
+  position: fixed;
+  top: 3em;
+  right: 3em;
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Pushes icons to the edges */
+  width: 48px; /* Slightly wider to accommodate icons */
+  height: 22px;
+  padding: 0 4px; /* Padding for icons */
+  background-color: transparent;
+  border: 1.5px solid var(--base01);
+  border-radius: 24px;
+  transition: border-color 0.3s ease-in-out;
+}
+
+/* The nub of the switch */
+.theme-toggle-label::after {
+  content: "";
+  position: absolute;
+  width: 18px; /* Adjusted nub size */
+  height: 18px;
+  border-radius: 50%;
+  top: 2px;
+  left: 3px; /* Initial position */
+  background-color: var(--base01);
+  transition:
+    transform 0.2s ease-in-out,
+    background-color 0.3s ease-in-out;
+  z-index: 1; /* Ensure nub is above icon area background */
+}
+
+/* Base styles for both icons */
+.theme-toggle-label .sun-light,
+.theme-toggle-label .half-moon {
+  font-size: 16px;
+  line-height: 24px; /* Center vertically */
+  color: var(--base01);
+  transition:
+    opacity 0.2s ease-in-out,
+    color 0.3s ease-in-out;
+}
+
+/* For DARK theme export (starts with Sun visible on the right) */
+body:not(.light-theme) .sun-light {
+  left: 5px;
+  opacity: 1;
+  transform: translateX(28px);
+  color: white;
+}
+body:not(.light-theme) .half-moon {
+  right: 5px;
+  opacity: 0;
+  transform: translateX(0px);
+}
+
+body:not(.light-theme)
+  #theme-toggle-export:checked
+  ~ .theme-toggle-label
+  .sun-light {
+  opacity: 0;
+  transform: translateX(0px);
+}
+body:not(.light-theme)
+  #theme-toggle-export:checked
+  ~ .theme-toggle-label
+  .half-moon {
+  opacity: 1;
+  transform: translateX(-30px);
+  color: black;
+}
+
+/* For LIGHT theme export (starts with Moon visible on the left) */
+body.light-theme .sun-light {
+  left: 5px;
+  opacity: 0;
+  transform: translateX(0px);
+}
+body.light-theme .half-moon {
+  right: 5px;
+  opacity: 1;
+  transform: translateX(-2px);
+  color: black;
+}
+
+body.light-theme #theme-toggle-export:checked ~ .theme-toggle-label .sun-light {
+  opacity: 1;
+  transform: translateX(0);
+  color: white;
+}
+body.light-theme #theme-toggle-export:checked ~ .theme-toggle-label .half-moon {
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+/* --- NUB MOVEMENT --- */
+#theme-toggle-export:checked + .theme-toggle-label::after {
+  transform: translateX(30px); /* Moves the nub to the right */
+}
+
+/* --- THEME OVERRIDE LOGIC (Unchanged from previous correct version) --- */
+.pinta-static-container {
+  background-color: var(--theme-main-background);
+  color: var(--theme-primary-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
+}
+
+body.light-theme #theme-toggle-export:checked ~ .pinta-static-container {
+  --theme-main-background: var(--base03);
+  --theme-editor-background: var(--base02);
+  --theme-primary-text: var(--base1);
+  --theme-secondary-text: var(--base01);
+  --theme-border-color: var(--base01);
+  --theme-schema-line-color: var(--orange);
+  --theme-schema-text-color: var(--cyan);
+}
+
+body:not(.light-theme) #theme-toggle-export:checked ~ .pinta-static-container {
+  --theme-main-background: #999;
+  --theme-editor-background: #aaa;
+  --theme-primary-text: #1c1c1c;
+  --theme-secondary-text: #4a4a4a;
+  --theme-border-color: #c0c0c0;
+  --theme-schema-line-color: #333;
+  --theme-schema-text-color: #333;
+}
+/* Magic ends */
+
+body.light-theme {
+  --theme-main-background: #999;
+  --theme-editor-background: #aaa;
+  --theme-primary-text: #1c1c1c;
+  --theme-secondary-text: #4a4a4a;
+  --theme-border-color: #c0c0c0;
+
+  --theme-schema-line-color: #333;
+  --theme-schema-text-color: #333;
+
+  --theme-modal-background: #ffffff;
+  --theme-modal-overlay-bg: rgba(50, 50, 50, 0.6);
+  --theme-modal-text-primary: #1c1c1c;
+  --theme-modal-text-secondary: #4a4a4a;
+
+  --theme-modal-button-confirm-text: #ffffff;
+  --theme-modal-button-cancel-bg: #e0e0e0;
+  --theme-modal-button-cancel-text: #1c1c1c;
+  --theme-modal-button-cancel-hover-bg: #d0d0d0;
+
+  --theme-postit-yellow-text: #1c1c1c;
+  --theme-postit-red-text: #ffffff;
+  --theme-postit-green-text: #1c1c1c;
+  --theme-postit-blue-text: #ffffff;
+  --theme-postit-white-text: #1c1c1c;
+  --theme-postit-transp-text: #1c1c1c;
+
+  --theme-postit-yellow-drag-handle: var(--base01);
+  --theme-postit-red-drag-handle: var(--postit-white-bg);
+  --theme-postit-green-drag-handle: var(--base01);
+  --theme-postit-blue-drag-handle: var(--postit-white-bg);
+  --theme-postit-white-drag-handle: var(--base01);
+}
+
+body {
+  margin: 0;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+  background-color: var(--theme-main-background);
+  color: var(--theme-primary-text);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+#info {
+  position: absolute;
+  right: 2em;
+  top: 2em;
+  opacity: 1;
+  transition: opacity 3s ease-in-out;
+  z-index: 10000;
+  line-height: 1.5;
+  font-weight: 100;
+  min-height: fit-content;
+  min-width: fit-content;
+  overflow: auto;
+  font-family: "monoidregular" !important;
+  z-index: -10000;
+}
+
+.fades {
+  opacity: 0 !important;
+  color: var(--theme-primary-text) !important;
+  /* I liked the looks of these gradients here: https://codersblock.com/blog/playing-with-infinity-in-css/ */
+  background: var(--theme-modal-background)
+    linear-gradient(45deg, #0006, transparent);
+  border: 1px solid var(--theme-border-color);
+  border-radius: 5px;
+  padding: 1em;
+  z-index: 10000 !important;
+}
+
+#editor-container {
+  aspect-ratio: 4 / 3;
+  width: 98vw;
+  max-height: 98vh;
+  margin: auto;
+  background-color: var(--theme-editor-background);
+  border: 1px solid var(--theme-border-color);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+#drawingCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  pointer-events: none;
+}
+
+#drawingCanvas > * {
+  pointer-events: all;
+}
+
+.line-element-group {
+  position: absolute;
+  transform-origin: 0 0;
+  z-index: 10;
+}
+.line-visual {
+  width: 100%;
+  background-color: var(--theme-schema-line-color);
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: crosshair;
+  border-radius: 2px;
+  background-clip: padding-box;
+  border-top: 0.5em solid transparent;
+  border-bottom: 0.5em solid transparent;
+}
+.line-text {
+  position: absolute;
+  white-space: pre-wrap;
+  color: var(--theme-schema-text-color);
+  font-size: 16px;
+  padding: 1px 2px;
+  background-color: transparent;
+  border: none;
+  user-select: none;
+  white-space: pre-wrap;
+  min-width: 10px;
+  text-align: center;
+}
+.line-text[contenteditable="true"] {
+  background-color: var(--theme-editor-background);
+  border: 1px dashed var(--blue);
+  color: var(--theme-primary-text);
+  user-select: text;
+  cursor: auto;
+  outline: none;
+}
+
+.handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  z-index: 15;
+  display: none;
+  background-clip: padding-box; /* Ensure background does not leak into transparent border*/
+  border: 0.5em solid transparent; /* Increase size of hover area for handle */
+}
+.resize-handle {
+  background-color: var(--blue);
+  cursor: ns-resize;
+  left: 100%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.root-drag-handle {
+  background-color: var(--red);
+  cursor: ew-resize;
+  left: 0%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.delete-handle {
+  color: var(--red);
+  background-color: transparent;
+  font-size: 14px;
+  line-height: 10px;
+  text-align: center;
+  font-family: monospace;
+  font-weight: bold;
+  cursor: pointer;
+  left: 30%;
+  top: 0px;
+  width: auto;
+  height: auto;
+  padding: 0 2px;
+  border-radius: 0;
+  z-index: 100;
+}
+.line-element-group:hover .handle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.handle.dragging {
+  display: flex !important;
+}
+.resize-handle.dragging {
+  background-color: #1a6a9e;
+}
+.root-drag-handle.dragging {
+  background-color: #a71e1c;
+}
+.delete-handle:hover {
+  color: #a71e1c;
+}
+
+.line-selected .line-visual {
+  filter: drop-shadow(0 0 3px var(--yellow));
+}
+
+.selection-trail {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background-color: var(--yellow);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: fade-out-trail 1s forwards;
+  z-index: 9999;
+}
+
+@keyframes fade-out-trail {
+  to {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+.line-text-wrapper {
+  display: inline;
+}
+
+span.year {
+  vertical-align: super;
+  font-size: 70%;
+  filter: hue-rotate(-30deg);
+  margin-left: 0.2em;
+}
+
+.link-icon-clickable > div {
+  font-size: 150%;
+  display: inline-block;
+  vertical-align: bottom;
+  filter: hue-rotate(60deg);
+}
+
+.link-icon-nonclickable > div {
+  font-size: 150%;
+  display: inline-block;
+  vertical-align: bottom;
+  filter: hue-rotate(15deg);
+}
+
+/* For export */
+.line-text > a {
+  margin: 0.2em;
+}
+
+.post-it {
+  position: absolute;
+  z-index: 500;
+  padding: 20px 8px 8px 8px;
+  border-radius: 3px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+  min-width: 100px;
+  min-height: 50px;
+  font-family: "Inter", sans-serif;
+  font-size: 11px;
+  color: var(--base1);
+  word-wrap: break-word;
+  overflow: hidden;
+  cursor: default;
+  touch-action: none;
+  box-sizing: border-box;
+  outline: none;
+  display: flex;
+  flex-direction: column;
+}
+.postit-drag-handle {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: calc(100% - 20px);
+  height: 18px;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  padding-left: 5px;
+  box-sizing: border-box;
+  z-index: 502;
+  font-size: 10px;
+  color: var(--base00);
+}
+.postit-drag-handle:active {
+  cursor: grabbing;
+}
+.postit-delete-button {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  font-size: 12px;
+  z-index: 503;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0);
+  color: var(--red);
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  opacity: 0.7;
+}
+.post-it:hover .postit-delete-button {
+  opacity: 1;
+}
+.postit-delete-button:hover {
+  background-color: rgba(220, 50, 50, 0.3);
+}
+.postit-content-area {
+  flex-grow: 1;
+  outline: none;
+  cursor: text;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  padding: 2px;
+  overflow-y: auto;
+  color: inherit;
+}
+.postit-content-area[contenteditable="true"] {
+  border: none;
+}
+.postit-content-area a {
+  color: var(--blue);
+  text-decoration: underline;
+}
+.postit-content-area a:hover {
+  color: var(--cyan);
+}
+.postit-color-yellow {
+  background-color: var(--yellow);
+  color: var(--base03);
+}
+.postit-color-red {
+  background-color: var(--red);
+  color: var(--base03);
+}
+.postit-color-green {
+  background-color: var(--green);
+  color: var(--base03);
+}
+.postit-color-blue {
+  background-color: var(--blue);
+  color: var(--base03);
+}
+.postit-color-white {
+  background-color: var(--postit-white-bg);
+  color: #333;
+}
+
+.postit-color-transp-0 {
+  background-color: var(--postit-transp-bg);
+  backdrop-filter: blur(1px);
+  color: var(--theme-postit-transp-text);
+}
+
+.postit-color-transp-1 {
+  background-color: var(--postit-transp-bg);
+  backdrop-filter: blur(2px);
+  color: var(--theme-postit-transp-text);
+}
+
+.postit-color-transp-2 {
+  background-color: var(--postit-transp-bg);
+  backdrop-filter: blur(4px);
+  color: var(--theme-postit-transp-text);
+}
+
+.postit-color-yellow .postit-drag-handle {
+  color: var(--base02);
+}
+.postit-color-red .postit-drag-handle {
+  color: var(--base03);
+}
+.postit-color-green .postit-drag-handle {
+  color: var(--base02);
+}
+.postit-color-blue .postit-drag-handle {
+  color: var(--base03);
+}
+.postit-color-white .postit-drag-handle {
+  color: var(--base01);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--theme-modal-overlay-bg);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+.modal-content {
+  background-color: var(--theme-modal-background);
+  color: var(--theme-modal-text-secondary);
+  padding: 25px;
+  border-radius: 8px;
+  border: 1px solid var(--theme-border-color);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+}
+.modal-content h3 {
+  margin-top: 0;
+  font-size: 1.25rem;
+  color: var(--theme-modal-text-primary);
+}
+.modal-content p {
+  margin-bottom: 20px;
+  color: var(--base0);
+  font-size: 0.9rem;
+}
+.modal-buttons button {
+  padding: 10px 15px;
+  margin: 0 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.modal-confirm-button {
+  background-color: var(--theme-modal-button-confirm-bg);
+  color: var(--theme-modal-button-confirm-text);
+}
+.modal-confirm-button:hover {
+  background-color: #a71e1c;
+}
+.modal-cancel-button {
+  background-color: var(--theme-modal-button-cancel-bg);
+  color: var(--theme-modal-button-cancel-text);
+}
+.modal-cancel-button:hover {
+  background-color: var(--theme-modal-button-cancel-bg);
+  color: var(--theme-modal-button-cancel-text);
+}
+
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+    padding-top: 0 !important;
+  }
+  #editor-container {
+    width: 100% !important;
+    height: auto !important;
+    min-height: initial !important;
+    border: none !important;
+    box-shadow: none !important;
+    background-color: white !important;
+    overflow: visible !important;
+  }
+  .line-visual {
+    background-color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  .line-text {
+    color: black !important;
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+  .handle,
+  .delete-handle,
+  .resize-handle,
+  .root-drag-handle {
+    display: none !important;
+  }
+  .modal-overlay {
+    display: none !important;
+  }
+
+  #drawingCanvas * {
+    stroke: black !important;
+    fill-opacity: 0 !important;
+    fill: none !important;
+  }
+  #drawingCanvas line[marker-end] {
+    marker-end: url(#arrowhead-print) !important;
+  }
+  #drawingCanvas rect[fill]:not([fill="none"]) {
+    fill: black !important;
+    fill-opacity: 0.2 !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  .post-it {
+    background-color: white !important;
+    color: black !important;
+    border: 1px solid #ccc !important;
+    box-shadow: 2px 2px 5px grey !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    position: absolute;
+    padding: 20px 8px 8px 8px;
+    border-radius: 3px;
+    min-width: 100px;
+    min-height: 50px;
+  }
+  .postit-drag-handle,
+  .postit-delete-button {
+    display: none !important;
+  }
+  .postit-content-area[contenteditable="true"] {
+    border: none;
+  }
+  .postit-content-area a {
+    color: #0000ee !important;
+    text-decoration: underline !important;
+  }
+  .theme-toggle-label {
+    display: none;
+  }
+}
+
+#helpModalContent {
+  text-align: left;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding-bottom: 60px;
+  min-width: 80vw !important;
+}
+
+.help-sections-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.help-section {
+  flex: 1 1 300px;
+}
+
+.help-section h4 {
+  margin-top: 0;
+  margin-bottom: 0.5em;
+}
+
+.help-section ul {
+  padding-left: 20px;
+  margin-top: 0.25em;
+  list-style-type: disc;
+}
+
+.help-section ul ul {
+  list-style-type: circle;
+  margin-top: 0.25em;
+}
+
+.help-section li {
+  margin-bottom: 0.3em;
+}
+
+.help-section code {
+  background-color: var(--theme-editor-background);
+  padding: 0.1em 0.4em;
+  border-radius: 3px;
+  font-family: monospace;
+  color: var(--theme-schema-text-color);
+}
+
+.help-section a {
+  color: var(--yellow);
+}
+
+.modal-close-button {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  color: var(--theme-secondary-text);
+  cursor: pointer;
+  padding: 5px;
+  line-height: 1;
+  z-index: 10;
+}
+
+.modal-close-button:hover {
+  color: var(--theme-primary-text);
+}
+
+#helpModal .modal-buttons {
+  position: absolute;
+  bottom: 15px;
+  left: 0;
+  right: 0;
+  padding-top: 15px;
+  background-color: var(--theme-modal-background);
+  border-top: 1px solid var(--theme-border-color);
+}
+
+.line-label-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  width: 1em;
+  height: 1em;
+  font-size: inherit;
+
+  border: 1.5px solid var(--theme-schema-text-color);
+  border-radius: 2px;
+
+  background-color: var(--theme-main-background);
+
+  margin-right: 5px;
+  vertical-align: middle;
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+}
+
+.line-label-checkbox:checked {
+  background-color: var(--theme-schema-text-color);
+  border-color: var(--theme-schema-text-color);
+}
+
+.line-label-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 0.25em;
+  top: 0.05em;
+  width: 0.3em;
+  height: 0.6em;
+  border: solid var(--theme-main-background);
+  border-width: 0 0.15em 0.15em 0;
+  transform: rotate(45deg);
+}
+
+.line-text.checkbox-checked {
+  text-decoration: line-through;
+  opacity: 0.9;
+  text-decoration-line: line-through;
+  text-decoration-thickness: 0.05em !important;
+}
+
+/*!
+ * Iconoir
+ * Copyright (c) 2025 Luca Burgio - https://iconoir.com
+ * License - https://github.com/iconoir-icons/iconoir/blob/main/LICENSE (Code: MIT License)
+ * CSS file created by Till Esser (@Wiwaltill) and automated by Pascal Jufer (@paescuj)
+ */
+
+*[class^="iconoir-"]::before,
+*[class*=" iconoir-"]::before {
+  content: " ";
+  display: block;
+  background: currentColor;
+  mask-size: cover;
+  -webkit-mask-size: cover;
+  width: 1em;
+  height: 1em;
+}
+*[class^="iconoir-"],
+*[class*=" iconoir-"] {
+  display: inline-block;
+}
+.iconoir-brain::before {
+  mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 14C5.34315 14 4 15.3431 4 17C4 18.6569 5.34315 20 7 20C7.35064 20 7.68722 19.9398 8 19.8293" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.26392 15.6046C2.9243 14.9582 2.00004 13.587 2.00004 12C2.00004 10.7883 2.53877 9.70251 3.38978 8.96898" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.42053 8.8882C3.1549 8.49109 3 8.01363 3 7.5C3 6.11929 4.11929 5 5.5 5C6.06291 5 6.58237 5.18604 7.00024 5.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.23769 5.56533C7.08524 5.24215 7 4.88103 7 4.5C7 3.11929 8.11929 2 9.5 2C10.8807 2 12 3.11929 12 4.5V20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 20C8 21.1046 8.89543 22 10 22C11.1046 22 12 21.1046 12 20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 7C12 8.65685 13.3431 10 15 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 14C18.6569 14 20 15.3431 20 17C20 18.6569 18.6569 20 17 20C16.6494 20 16.3128 19.9398 16 19.8293" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M19.7361 15.6046C21.0757 14.9582 22 13.587 22 12C22 10.7883 21.4612 9.70251 20.6102 8.96898" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.5795 8.8882C20.8451 8.49109 21 8.01363 21 7.5C21 6.11929 19.8807 5 18.5 5C17.9371 5 17.4176 5.18604 16.9998 5.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 4.5C12 3.11929 13.1193 2 14.5 2C15.8807 2 17 3.11929 17 4.5C17 4.88103 16.9148 5.24215 16.7623 5.56533" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 20C16 21.1046 15.1046 22 14 22C12.8954 22 12 21.1046 12 20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+  -webkit-mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 14C5.34315 14 4 15.3431 4 17C4 18.6569 5.34315 20 7 20C7.35064 20 7.68722 19.9398 8 19.8293" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.26392 15.6046C2.9243 14.9582 2.00004 13.587 2.00004 12C2.00004 10.7883 2.53877 9.70251 3.38978 8.96898" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.42053 8.8882C3.1549 8.49109 3 8.01363 3 7.5C3 6.11929 4.11929 5 5.5 5C6.06291 5 6.58237 5.18604 7.00024 5.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.23769 5.56533C7.08524 5.24215 7 4.88103 7 4.5C7 3.11929 8.11929 2 9.5 2C10.8807 2 12 3.11929 12 4.5V20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 20C8 21.1046 8.89543 22 10 22C11.1046 22 12 21.1046 12 20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 7C12 8.65685 13.3431 10 15 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 14C18.6569 14 20 15.3431 20 17C20 18.6569 18.6569 20 17 20C16.6494 20 16.3128 19.9398 16 19.8293" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M19.7361 15.6046C21.0757 14.9582 22 13.587 22 12C22 10.7883 21.4612 9.70251 20.6102 8.96898" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.5795 8.8882C20.8451 8.49109 21 8.01363 21 7.5C21 6.11929 19.8807 5 18.5 5C17.9371 5 17.4176 5.18604 16.9998 5.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 4.5C12 3.11929 13.1193 2 14.5 2C15.8807 2 17 3.11929 17 4.5C17 4.88103 16.9148 5.24215 16.7623 5.56533" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 20C16 21.1046 15.1046 22 14 22C12.8954 22 12 21.1046 12 20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+}
+.iconoir-drawer::before {
+  mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 14H3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 8H21" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 17H13" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 11H13" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 5H13" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 2.6V19.4C21 19.7314 20.7314 20 20.4 20H3.6C3.26863 20 3 19.7314 3 19.4V2.6C3 2.26863 3.26863 2 3.6 2H20.4C20.7314 2 21 2.26863 21 2.6Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M17.5 20V22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 20V22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+  -webkit-mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 14H3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 8H21" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 17H13" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 11H13" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 5H13" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 2.6V19.4C21 19.7314 20.7314 20 20.4 20H3.6C3.26863 20 3 19.7314 3 19.4V2.6C3 2.26863 3.26863 2 3.6 2H20.4C20.7314 2 21 2.26863 21 2.6Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M17.5 20V22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 20V22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+}
+.iconoir-flask::before {
+  mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" stroke-width="1.5" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18.5 15L5.5 15" stroke="currentColor" stroke-linejoin="round"/><path d="M16 4L8 4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 4.5L9 10.2602C9 10.7376 8.82922 11.1992 8.51851 11.5617L3.48149 17.4383C3.17078 17.8008 3 18.2624 3 18.7398V19C3 20.1046 3.89543 21 5 21L19 21C20.1046 21 21 20.1046 21 19V18.7398C21 18.2624 20.8292 17.8008 20.5185 17.4383L15.4815 11.5617C15.1708 11.1992 15 10.7376 15 10.2602L15 4.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 9.01L12.01 8.99889" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 2.01L11.01 1.99889" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+  -webkit-mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" stroke-width="1.5" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18.5 15L5.5 15" stroke="currentColor" stroke-linejoin="round"/><path d="M16 4L8 4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 4.5L9 10.2602C9 10.7376 8.82922 11.1992 8.51851 11.5617L3.48149 17.4383C3.17078 17.8008 3 18.2624 3 18.7398V19C3 20.1046 3.89543 21 5 21L19 21C20.1046 21 21 20.1046 21 19V18.7398C21 18.2624 20.8292 17.8008 20.5185 17.4383L15.4815 11.5617C15.1708 11.1992 15 10.7376 15 10.2602L15 4.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 9.01L12.01 8.99889" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 2.01L11.01 1.99889" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+}
+.iconoir-github-circle::before {
+  mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.3333 19V17.137C14.3583 16.8275 14.3154 16.5163 14.2073 16.2242C14.0993 15.9321 13.9286 15.6657 13.7067 15.4428C15.8 15.2156 18 14.4431 18 10.8989C17.9998 9.99256 17.6418 9.12101 17 8.46461C17.3039 7.67171 17.2824 6.79528 16.94 6.01739C16.94 6.01739 16.1533 5.7902 14.3333 6.97811C12.8053 6.57488 11.1947 6.57488 9.66666 6.97811C7.84666 5.7902 7.05999 6.01739 7.05999 6.01739C6.71757 6.79528 6.69609 7.67171 6.99999 8.46461C6.35341 9.12588 5.99501 10.0053 5.99999 10.9183C5.99999 14.4366 8.19999 15.2091 10.2933 15.4622C10.074 15.6829 9.90483 15.9461 9.79686 16.2347C9.68889 16.5232 9.64453 16.8306 9.66666 17.137V19" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.66667 17.7018C7.66667 18.3335 6 17.7018 5 15.7544" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+  -webkit-mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.3333 19V17.137C14.3583 16.8275 14.3154 16.5163 14.2073 16.2242C14.0993 15.9321 13.9286 15.6657 13.7067 15.4428C15.8 15.2156 18 14.4431 18 10.8989C17.9998 9.99256 17.6418 9.12101 17 8.46461C17.3039 7.67171 17.2824 6.79528 16.94 6.01739C16.94 6.01739 16.1533 5.7902 14.3333 6.97811C12.8053 6.57488 11.1947 6.57488 9.66666 6.97811C7.84666 5.7902 7.05999 6.01739 7.05999 6.01739C6.71757 6.79528 6.69609 7.67171 6.99999 8.46461C6.35341 9.12588 5.99501 10.0053 5.99999 10.9183C5.99999 14.4366 8.19999 15.2091 10.2933 15.4622C10.074 15.6829 9.90483 15.9461 9.79686 16.2347C9.68889 16.5232 9.64453 16.8306 9.66666 17.137V19" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.66667 17.7018C7.66667 18.3335 6 17.7018 5 15.7544" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+}
+.iconoir-half-moon::before {
+  mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 11.5066C3 16.7497 7.25034 21 12.4934 21C16.2209 21 19.4466 18.8518 21 15.7259C12.4934 15.7259 8.27411 11.5066 8.27411 3C5.14821 4.55344 3 7.77915 3 11.5066Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+  -webkit-mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 11.5066C3 16.7497 7.25034 21 12.4934 21C16.2209 21 19.4466 18.8518 21 15.7259C12.4934 15.7259 8.27411 11.5066 8.27411 3C5.14821 4.55344 3 7.77915 3 11.5066Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+}
+.iconoir-link::before {
+  mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+  -webkit-mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+}
+.iconoir-map::before {
+  mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 19L3.78974 20.7368C3.40122 20.8663 3 20.5771 3 20.1675L3 5.43246C3 5.1742 3.16526 4.94491 3.41026 4.86325L9 3M9 19L15 21M9 19L9 3M15 21L20.5897 19.1368C20.8347 19.0551 21 18.8258 21 18.5675L21 3.83246C21 3.42292 20.5988 3.13374 20.2103 3.26325L15 5M15 21L15 5M15 5L9 3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+  -webkit-mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 19L3.78974 20.7368C3.40122 20.8663 3 20.5771 3 20.1675L3 5.43246C3 5.1742 3.16526 4.94491 3.41026 4.86325L9 3M9 19L15 21M9 19L9 3M15 21L20.5897 19.1368C20.8347 19.0551 21 18.8258 21 18.5675L21 3.83246C21 3.42292 20.5988 3.13374 20.2103 3.26325L15 5M15 21L15 5M15 5L9 3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+}
+.iconoir-music-note::before {
+  mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 16V19C12 20.1046 11.1046 21 10 21H9C7.89543 21 7 20.1046 7 19V18C7 16.8954 7.89543 16 9 16H12ZM12 16V8M12 8V4L17 3V7L12 8Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+  -webkit-mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 16V19C12 20.1046 11.1046 21 10 21H9C7.89543 21 7 20.1046 7 19V18C7 16.8954 7.89543 16 9 16H12ZM12 16V8M12 8V4L17 3V7L12 8Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+}
+.iconoir-sigma-function::before {
+  mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4L12 4L20 4V7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 20H12H20V17" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 20L12 12L4 4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+  -webkit-mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4L12 4L20 4V7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 20H12H20V17" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 20L12 12L4 4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+}
+.iconoir-sun-light::before {
+  mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 18C15.3137 18 18 15.3137 18 12C18 8.68629 15.3137 6 12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 12L23 12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 2V1" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 23V22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 20L19 19" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 4L19 5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 20L5 19" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 4L5 5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 12L2 12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+  -webkit-mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 18C15.3137 18 18 15.3137 18 12C18 8.68629 15.3137 6 12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 12L23 12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 2V1" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 23V22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 20L19 19" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 4L19 5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 20L5 19" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 4L5 5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 12L2 12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+}
+.iconoir-youtube::before {
+  mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 12L10.5 14V10L14 12Z" fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12.7075V11.2924C2 8.39705 2 6.94939 2.90549 6.01792C3.81099 5.08645 5.23656 5.04613 8.08769 4.96549C9.43873 4.92728 10.8188 4.8999 12 4.8999C13.1812 4.8999 14.5613 4.92728 15.9123 4.96549C18.7634 5.04613 20.189 5.08645 21.0945 6.01792C22 6.94939 22 8.39705 22 11.2924V12.7075C22 15.6028 22 17.0505 21.0945 17.9819C20.189 18.9134 18.7635 18.9537 15.9124 19.0344C14.5613 19.0726 13.1812 19.1 12 19.1C10.8188 19.1 9.43867 19.0726 8.0876 19.0344C5.23651 18.9537 3.81097 18.9134 2.90548 17.9819C2 17.0505 2 15.6028 2 12.7075Z" stroke="currentColor" stroke-width="1.5"/></svg>');
+  -webkit-mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 12L10.5 14V10L14 12Z" fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12.7075V11.2924C2 8.39705 2 6.94939 2.90549 6.01792C3.81099 5.08645 5.23656 5.04613 8.08769 4.96549C9.43873 4.92728 10.8188 4.8999 12 4.8999C13.1812 4.8999 14.5613 4.92728 15.9123 4.96549C18.7634 5.04613 20.189 5.08645 21.0945 6.01792C22 6.94939 22 8.39705 22 11.2924V12.7075C22 15.6028 22 17.0505 21.0945 17.9819C20.189 18.9134 18.7635 18.9537 15.9124 19.0344C14.5613 19.0726 13.1812 19.1 12 19.1C10.8188 19.1 9.43867 19.0726 8.0876 19.0344C5.23651 18.9537 3.81097 18.9134 2.90548 17.9819C2 17.0505 2 15.6028 2 12.7075Z" stroke="currentColor" stroke-width="1.5"/></svg>');
+}
+.iconoir-zoom-in::before {
+  mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 11H11M14 11H11M11 11V8M11 11V14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 17L21 21" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 11C3 15.4183 6.58172 19 11 19C13.213 19 15.2161 18.1015 16.6644 16.6493C18.1077 15.2022 19 13.2053 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+  -webkit-mask-image: url('data:image/svg+xml;charset=utf-8,<svg width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 11H11M14 11H11M11 11V8M11 11V14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 17L21 21" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 11C3 15.4183 6.58172 19 11 19C13.213 19 15.2161 18.1015 16.6644 16.6493C18.1077 15.2022 19 13.2053 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+}
+    /* Additional styles for static export if needed */
+    body {
+        margin: 0;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--theme-main-background);
+        color: var(--theme-primary-text);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+    .postit-content-area a { color: var(--blue); text-decoration: underline; }
+    .postit-content-area a:hover { color: var(--cyan); }
+  </style>
+</head>
+<body class="">
+
+    <input type="checkbox" id="theme-toggle-export" class="theme-toggle-checkbox">
+    <label for="theme-toggle-export" class="theme-toggle-label">
+      <i class="sun-light iconoir-sun-light"></i>
+      <i class="half-moon iconoir-half-moon"></i>
+    </label>
+  
+  <div class="pinta-static-container">
+  <div id="editor-container-export" style="
+    position: relative;
+    width: 2282.54248046875px;
+    height: 1228.59375px;
+    background-color: var(--theme-editor-background);
+    border: 1px solid var(--theme-border-color);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    border-radius: 0.5rem;
+    margin: 20px auto; /* Center it on the page */
+  ">
+    <div class="line-element-group" style="left: 122.859px; top: 1105.73px; width: 2261.57px; transform: rotate(-25.7598deg) scaleX(1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 4px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; max-width: 400px; width: 400px; color: var(--orange); left: 77.9026%; top: -43.8043px; transform: translateX(-50%) translateY(-50%) scaleX(1) rotate(0deg); font-size: 40px; font-weight: normal; text-align: center;white-space: normal;"><div class="line-text-wrapper" title="null"><span class="link-icon-nonclickable"><div class="iconoir-brain"></div></span>LLM stuff</div></div></div><div class="line-element-group" style="left: 612.615px; top: 869.402px; width: 733.484px; transform: rotate(-115.76deg) scaleX(1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 2.4314px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; max-width: 400px; width: 400px; color: var(--theme-schema-text-color); left: 49.6264%; top: -25.2219px; transform: translateX(-50%) translateY(-50%) scaleX(1) rotate(180deg); font-size: 22px; font-weight: normal; text-align: center;white-space: normal;"><div class="line-text-wrapper" title="null"><span class="link-icon-nonclickable"><div class="iconoir-sigma-function"></div></span>Transformers</div></div></div><div class="line-element-group" style="left: 795.676px; top: 781.065px; width: 430.279px; transform: rotate(-115.76deg) scaleX(1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 2.4314px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; max-width: 365.737px; width: 365.737px; color: var(--theme-schema-text-color); left: 51.7987%; top: -27.7773px; transform: translateX(-50%) translateY(-50%) scaleX(1) rotate(180deg); font-size: 24px; font-weight: normal; text-align: center;white-space: normal;"><div class="line-text-wrapper" title="null"><span class="link-icon-nonclickable"><div class="iconoir-zoom-in"></div></span>Attention</div></div></div><div class="line-element-group" style="left: 661.912px; top: 503.863px; width: 506.776px; transform: rotate(-25.7598deg) scaleX(1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 2.4314px; background-color: var(--theme-schema-line-color);"></div><div class="line-text checkbox-checked" style="white-space: pre-wrap; max-width: 400px; width: 400px; color: var(--theme-schema-text-color); left: 50.8593%; top: -19.3031px; transform: translateX(-50%) translateY(-50%) scaleX(1) rotate(0deg); font-size: 16px; font-weight: normal; text-align: center;white-space: normal;"><input type="checkbox" class="line-label-checkbox" style="border-color: var(--theme-schema-text-color); background-color: var(--theme-schema-text-color);" checked disabled><a href="https://www.youtube.com/watch?v=eMlx5fFNoYc" target="_blank" style="text-decoration:none; color:inherit;"><span class="link-icon-clickable"><div class="iconoir-youtube"></div></span></a><div class="line-text-wrapper" title="null">Attention in transformers, step-by-step</div></div></div><div class="line-element-group" style="left: 510.461px; top: 918.696px; width: 408.884px; transform: rotate(-115.76deg) scaleX(1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 2.4314px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; max-width: 347.552px; width: 347.552px; color: var(--theme-schema-text-color); left: 50.1297%; top: -32.1367px; transform: translateX(-50%) translateY(-50%) scaleX(1) rotate(180deg); font-size: 22px; font-weight: normal; text-align: center;white-space: normal;"><div class="line-text-wrapper" title="null"><span class="link-icon-nonclickable"><div class="iconoir-map"></div></span>Embeddings</div></div></div><div class="line-element-group" style="left: 340.914px; top: 567.342px; width: 192.65px; transform: rotate(-25.7598deg) scaleX(-1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 2.4314px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; max-width: 163.752px; width: 163.752px; color: var(--theme-schema-text-color); left: 50%; top: -18.2355px; transform: translateX(-50%) translateY(-50%) scaleX(-1) rotate(0deg); font-size: 16px; font-weight: normal; text-align: center;white-space: normal;"><a href="https://github.com/rasbt/LLMs-from-scratch/tree/c278745aff419ae6c1d6409ca4279aa57ea749e4/ch02" target="_blank" style="text-decoration:none; color:inherit;"><span class="link-icon-clickable"><div class="iconoir-github-circle"></div></span></a><div class="line-text-wrapper" title="null">LLMFS: Ch2</div></div></div><div class="line-element-group" style="left: 324.183px; top: 271.68px; width: 353.37px; transform: rotate(-25.7598deg) scaleX(1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 2.4314px; background-color: var(--theme-schema-line-color);"></div><div class="line-text checkbox-checked" style="white-space: pre-wrap; max-width: 300.365px; width: 300.365px; color: var(--theme-schema-text-color); left: 49.0147%; top: -36.4711px; transform: translateX(-50%) translateY(-50%) scaleX(1) rotate(0deg); font-size: 16px; font-weight: normal; text-align: center;white-space: normal;"><input type="checkbox" class="line-label-checkbox" style="border-color: var(--theme-schema-text-color); background-color: var(--theme-schema-text-color);" checked disabled><a href="https://www.youtube.com/watch?v=wjZofJX0v4M" target="_blank" style="text-decoration:none; color:inherit;"><span class="link-icon-clickable"><div class="iconoir-youtube"></div></span></a><div class="line-text-wrapper" title="null">Transformers (how LLMs work) explained visually</div></div></div><div class="line-element-group" style="left: 956.795px; top: 703.316px; width: 436.283px; transform: rotate(-115.76deg) scaleX(-1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 1.82386px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; max-width: 370.84px; width: 370.84px; color: var(--theme-schema-text-color); left: 85.413%; top: -25.3532px; transform: translateX(-50%) translateY(-50%) scaleX(-1) rotate(180deg); font-size: 22px; font-weight: normal; text-align: center;white-space: normal;"><div class="line-text-wrapper" title="null"><span class="link-icon-nonclickable"><div class="iconoir-drawer"></div></span>Misc</div></div></div><div class="line-element-group" style="left: 998.141px; top: 788.998px; width: 452.364px; transform: rotate(-25.7598deg) scaleX(-1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 1.82386px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; max-width: 384.509px; width: 384.509px; color: var(--theme-schema-text-color); left: 51.2502%; top: -23.4325px; transform: translateX(-50%) translateY(-50%) scaleX(-1) rotate(0deg); font-size: 16px; font-weight: normal; text-align: center;white-space: normal;"><input type="checkbox" class="line-label-checkbox" style="border-color: var(--theme-schema-text-color); background-color: var(--theme-main-background);" disabled><a href="https://www.youtube.com/watch?v=ZNodOsz94cc&amp;list=WL&amp;index=64" target="_blank" style="text-decoration:none; color:inherit;"><span class="link-icon-clickable"><div class="iconoir-youtube"></div></span></a><div class="line-text-wrapper" title="null">MIT 6.S191 (Google): Large Language Models</div></div></div><div class="line-element-group" style="left: 345.206px; top: 315.248px; width: 353.37px; transform: rotate(-25.7598deg) scaleX(1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 2.4314px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; max-width: 300.365px; width: 300.365px; color: var(--theme-schema-text-color); left: 49.0335%; top: -27.3579px; transform: translateX(-50%) translateY(-50%) scaleX(1) rotate(0deg); font-size: 16px; font-weight: normal; text-align: center;white-space: normal;"><input type="checkbox" class="line-label-checkbox" style="border-color: var(--theme-schema-text-color); background-color: var(--theme-main-background);" disabled><a href="https://jalammar.github.io/illustrated-transformer/" target="_blank" style="text-decoration:none; color:inherit;"><span class="link-icon-clickable"><div class="iconoir-link"></div></span></a><div class="line-text-wrapper" title="null">The Illustrated Transformer</div></div></div><div class="line-element-group" style="left: 730.169px; top: 645.314px; width: 506.776px; transform: rotate(-25.7598deg) scaleX(1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 2.4314px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; max-width: 400px; width: 400px; color: var(--theme-schema-text-color); left: 50.8335%; top: -30px; transform: translateX(-50%) translateY(-50%) scaleX(1) rotate(0deg); font-size: 16px; font-weight: normal; text-align: center;white-space: normal;"><input type="checkbox" class="line-label-checkbox" style="border-color: var(--theme-schema-text-color); background-color: var(--theme-main-background);" disabled><a href="https://jalammar.github.io/visualizing-neural-machine-translation-mechanics-of-seq2seq-models-with-attention/" target="_blank" style="text-decoration:none; color:inherit;"><span class="link-icon-clickable"><div class="iconoir-link"></div></span></a><div class="line-text-wrapper" title="null">Visualizing A Neural Machine Translation Model (Mechanics of Seq2seq Models With Attention)</div></div></div><div class="line-element-group" style="left: 619.024px; top: 414.985px; width: 506.776px; transform: rotate(-25.7598deg) scaleX(1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 2.4314px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; max-width: 400px; width: 400px; color: var(--yellow); left: 50%; top: -13.6789px; transform: translateX(-50%) translateY(-50%) scaleX(1) rotate(0deg); font-size: 16px; font-weight: normal; text-align: center;white-space: normal;"><input type="checkbox" class="line-label-checkbox" style="border-color: var(--yellow); background-color: var(--theme-main-background);" disabled><a href="https://arxiv.org/abs/1706.03762" target="_blank" style="text-decoration:none; color:inherit;"><span class="link-icon-clickable"><div class="iconoir-flask"></div></span></a><div class="line-text-wrapper" title="null">Attention is all you need<span class="year">2017</span></div></div></div><div class="line-element-group" style="left: 1026.09px; top: 846.927px; width: 381.423px; transform: rotate(-25.7598deg) scaleX(1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 1.82386px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; max-width: 324.21px; width: 324.21px; color: var(--theme-schema-text-color); left: 49.5914%; top: -30.0478px; transform: translateX(-50%) translateY(-50%) scaleX(1) rotate(0deg); font-size: 16px; font-weight: normal; text-align: center;white-space: normal;"><input type="checkbox" class="line-label-checkbox" style="border-color: var(--theme-schema-text-color); background-color: var(--theme-main-background);" disabled><a href="https://gist.github.com/yoavg/95bbc5768cacd2bf07187779fada4867" target="_blank" style="text-decoration:none; color:inherit;"><span class="link-icon-clickable"><div class="iconoir-github-circle"></div></span></a><div class="line-text-wrapper" title="null">Learning LLMs in 2025</div></div></div><div class="line-element-group" style="left: 1054.66px; top: 906.134px; width: 404.538px; transform: rotate(-25.7598deg) scaleX(1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 1.82386px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; color: var(--yellow); left: 48.6133%; top: -18.5507px; transform: translateX(-50%) translateY(-50%) scaleX(1) rotate(0deg); font-size: 16px; font-weight: normal; text-align: center; max-width: 343.857px; width: 343.857px;white-space: normal;"><input type="checkbox" class="line-label-checkbox" style="border-color: var(--yellow); background-color: var(--theme-main-background);" disabled><a href="https://ml-site.cdn-apple.com/papers/the-illusion-of-thinking.pdf" target="_blank" style="text-decoration:none; color:inherit;"><span class="link-icon-clickable"><div class="iconoir-flask"></div></span></a><div class="line-text-wrapper" title="null">The Illusion of Thinking<span class="year">2025</span></div></div></div><div class="line-element-group" style="left: 629.107px; top: 967.076px; width: 225.276px; transform: rotate(64.2402deg) scaleX(1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 1.82386px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; max-width: 191.485px; width: 191.485px; color: var(--theme-schema-text-color); left: 50.6531%; top: -24.9444px; transform: translateX(-50%) translateY(-50%) scaleX(1) rotate(0deg); font-size: 16px; font-weight: normal; text-align: center;white-space: normal;"><a href="https://introtodeeplearning.com/" target="_blank" style="text-decoration:none; color:inherit;"><span class="link-icon-clickable"><div class="iconoir-link"></div></span></a><div class="line-text-wrapper" title="null">More material from the course</div></div></div><div class="line-element-group" style="left: 1413.04px; top: 483.153px; width: 451.686px; transform: rotate(-115.76deg) scaleX(-1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 2px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; max-width: 383.933px; width: 383.933px; color: var(--theme-schema-text-color); left: 50%; top: -15px; transform: translateX(-50%) translateY(-50%) scaleX(-1) rotate(180deg); font-size: 16px; font-weight: normal; text-align: center;white-space: normal;"><div class="line-text-wrapper" title="null"><span class="link-icon-nonclickable"><div class="iconoir-music-note"></div></span>Finetuning</div></div></div><div class="line-element-group" style="left: 1455px; top: 570.102px; width: 476.593px; transform: rotate(-25.7598deg) scaleX(1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 2px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; color: var(--yellow); left: 46.8453%; top: -23.518px; transform: translateX(-50%) translateY(-50%) scaleX(1) rotate(0deg); font-size: 16px; font-weight: normal; text-align: center; max-width: 400px; width: 400px;white-space: normal;"><a href="https://arxiv.org/pdf/2203.02155" target="_blank" style="text-decoration:none; color:inherit;"><span class="link-icon-clickable"><div class="iconoir-flask"></div></span></a><div class="line-text-wrapper" title="InstructGPT: Training language models to follow instructions with human feedback">InstructGPT: Training language models to f…<span class="year">2022</span></div></div></div><div class="line-element-group" style="left: 1082.3px; top: 963.396px; width: 418.821px; transform: rotate(-25.7598deg) scaleX(1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 2px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; color: var(--yellow); left: 47.8184%; top: -24.915px; transform: translateX(-50%) translateY(-50%) scaleX(1) rotate(0deg); font-size: 16px; font-weight: normal; text-align: center; max-width: 355.998px; width: 355.998px;white-space: normal;"><input type="checkbox" class="line-label-checkbox" style="border-color: var(--yellow); background-color: var(--theme-main-background);" disabled><a href="https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf" target="_blank" style="text-decoration:none; color:inherit;"><span class="link-icon-clickable"><div class="iconoir-flask"></div></span></a><div class="line-text-wrapper" title="Improving Language Understanding by Generative Pre-Training">Improving Language Understand…<span class="year">2018</span></div></div></div><div class="line-element-group" style="left: 371.018px; top: 368.738px; width: 465.055px; transform: rotate(-25.7598deg) scaleX(1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 2px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; color: var(--yellow); left: 41.9518%; top: -26.8066px; transform: translateX(-50%) translateY(-50%) scaleX(1) rotate(0deg); font-size: 16px; font-weight: normal; text-align: center; cursor: grab; max-width: 395.297px; width: 395.297px;white-space: normal;"><input type="checkbox" class="line-label-checkbox" style="border-color: var(--yellow); background-color: var(--theme-main-background);" disabled><a href="https://arxiv.org/pdf/1810.04805" target="_blank" style="text-decoration:none; color:inherit;"><span class="link-icon-clickable"><div class="iconoir-flask"></div></span></a><div class="line-text-wrapper" title="BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding">BERT: Pre-training of Deep Bidirectio…<span class="year">2019</span></div></div></div><div class="line-element-group" style="left: 778.116px; top: 744.674px; width: 516.305px; transform: rotate(-25.7598deg) scaleX(1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 2px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; max-width: 400px; width: 400px; color: var(--yellow); left: 49.9824%; top: -32.322px; transform: translateX(-50%) translateY(-50%) scaleX(1) rotate(0deg); font-size: 16px; font-weight: normal; text-align: center;white-space: normal;"><input type="checkbox" class="line-label-checkbox" style="border-color: var(--yellow); background-color: var(--theme-main-background);" disabled><a href="https://arxiv.org/pdf/2205.14135" target="_blank" style="text-decoration:none; color:inherit;"><span class="link-icon-clickable"><div class="iconoir-flask"></div></span></a><div class="line-text-wrapper" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness">FlashAttention: Fast and Memory-Effic…<span class="year">2022</span></div></div></div><div class="line-element-group" style="left: 372.14px; top: 632.051px; width: 336.216px; transform: rotate(-25.7598deg) scaleX(-1); transform-origin: 0px 0px;"><div class="line-visual" style="height: 2px; background-color: var(--theme-schema-line-color);"></div><div class="line-text" style="white-space: pre-wrap; color: var(--yellow); left: 50.6607%; top: -24.9163px; transform: translateX(-50%) translateY(-50%) scaleX(-1) rotate(0deg); font-size: 16px; font-weight: normal; text-align: center; max-width: 285.784px; width: 285.784px;white-space: normal;"><a href="https://arxiv.org/pdf/1301.3781" target="_blank" style="text-decoration:none; color:inherit;"><span class="link-icon-clickable"><div class="iconoir-flask"></div></span></a><div class="line-text-wrapper" title="Efficient Estimation of Word Representations in Vector Space">Efficient Estimation of Wor…<span class="year">2013</span></div></div></div><div class="post-it postit-color-transp-1" style="position:absolute; left:30.08522605895996px; top:246.8607988357544px; width:186.3068084716797px; transform: translate(0px, 0px);"><div class="postit-drag-handle" ></div><div class="postit-content-area" style="font-size: 120%; white-space: normal;">LLMFS: LLMs from scratch</div></div><div class="post-it postit-color-transp-1" style="position:absolute; left:34.77272605895996px; top:316.2499895095825px; width:133.2954559326172px; transform: translate(0px, 0px);"><div class="postit-drag-handle" ></div><div class="postit-content-area" style="font-size: 100%; white-space: normal;">HOLM: Hands on LLM</div></div><svg id="drawingCanvas" width="100%" height="100%" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"><defs>
+                          <filter id="drop-shadow" x="-50%" y="-50%" width="200%" height="200%">
+                              <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur"></feGaussianBlur><feOffset dx="1" dy="1" result="offsetBlur"></feOffset><feMerge><feMergeNode in="offsetBlur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter>
+                          <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--red)"></polygon></marker>
+                          <marker id="arrowhead-orange" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--orange)"></polygon></marker>
+                          <marker id="arrowhead-yellow" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--yellow)"></polygon></marker>
+                          <marker id="arrowhead-green" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--green)"></polygon></marker>
+                          <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--blue)"></polygon></marker>
+                          <marker id="arrowhead-cyan" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--cyan)"></polygon></marker>
+                          <marker id="arrowhead-violet" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--violet)"></polygon></marker>
+                          <marker id="arrowhead-magenta" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--magenta)"></polygon></marker>
+                          <marker id="arrowhead-print" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="black"></polygon></marker>
+                      </defs></svg>
+  </div>
+  </div>
+  
+<!-- PINTA_DIAGRAM_DATA_START 
+{"lines":{"line-0":{"parentId":null,"startX":122.859375,"startY":1105.734375,"length":2261.5689630488023,"text":":brain: LLM stuff","textPosRatio":0.7790259733530265,"textPerpOffset":-43.80432898803414,"thickness":4,"color":"default","textColor":"orange","children":["line-1","line-2","line-4","line-7","line-15"],"offsetRatioOnParent":0.5,"fontSize":40,"isBold":false,"isCentered":true,"linkUrl":null,"checkboxState":null,"angle":-25.759763219926928,"id":"line-0"},"line-1":{"parentId":"line-0","startX":612.6147890879438,"startY":869.4015272327036,"length":733.4842336653784,"relativeDirection":-1,"text":":sigma-function: Transformers","textPosRatio":0.49626392910255274,"textPerpOffset":-25.2219025024685,"thickness":2.43140508087483,"color":"default","textColor":"default","children":["line-6","line-9","line-18"],"offsetRatioOnParent":0.2404505636701476,"fontSize":22,"isBold":false,"isCentered":true,"linkUrl":null,"checkboxState":null,"id":"line-1"},"line-2":{"parentId":"line-0","startX":795.6762293723609,"startY":781.0647161341121,"length":430.27923320940897,"relativeDirection":-1,"text":":zoom-in: Attention","textPosRatio":0.5179866001826956,"textPerpOffset":-27.77727114394067,"thickness":2.43140508087483,"color":"default","textColor":"default","children":["line-3","line-10","line-11","line-19"],"offsetRatioOnParent":0.330326500181496,"fontSize":24,"isBold":false,"isCentered":true,"linkUrl":null,"checkboxState":null,"id":"line-2"},"line-3":{"parentId":"line-2","startX":661.911856341937,"startY":503.86319073195847,"length":506.77555990891614,"relativeDirection":1,"text":"Attention in transformers, step-by-step","textPosRatio":0.5085934387599644,"textPerpOffset":-19.303111147360553,"thickness":2.43140508087483,"color":"default","textColor":"default","children":[],"offsetRatioOnParent":0.7153220607760894,"fontSize":16,"isBold":false,"isCentered":true,"linkUrl":"https://www.youtube.com/watch?v=eMlx5fFNoYc","checkboxState":"checked","id":"line-3"},"line-4":{"parentId":"line-0","startX":510.4610773771682,"startY":918.6960871378074,"length":408.8841272688652,"relativeDirection":-1,"text":":map: Embeddings","textPosRatio":0.5012966571114287,"textPerpOffset":-32.136738851056116,"thickness":2.43140508087483,"color":"default","textColor":"default","children":["line-5","line-20"],"offsetRatioOnParent":0.19029712614746805,"fontSize":22,"isBold":false,"isCentered":true,"linkUrl":null,"checkboxState":null,"id":"line-4"},"line-5":{"parentId":"line-4","startX":340.9143068364054,"startY":567.3422673115163,"length":-192.64950223683195,"relativeDirection":1,"text":"LLMFS: Ch2","textPosRatio":0.5,"textPerpOffset":-18.23553810656123,"thickness":2.43140508087483,"color":"default","textColor":"default","children":[],"offsetRatioOnParent":0.9541152050487884,"fontSize":16,"isBold":false,"isCentered":true,"linkUrl":"https://github.com/rasbt/LLMs-from-scratch/tree/c278745aff419ae6c1d6409ca4279aa57ea749e4/ch02","checkboxState":null,"id":"line-5"},"line-6":{"parentId":"line-1","startX":324.1827185366687,"startY":271.68026468449125,"length":353.37015047637544,"relativeDirection":1,"text":"Transformers (how LLMs work) explained visually","textPosRatio":0.49014662913182305,"textPerpOffset":-36.47107621312246,"thickness":2.43140508087483,"color":"default","textColor":"default","children":[],"offsetRatioOnParent":0.9048244162467942,"fontSize":16,"isBold":false,"isCentered":true,"linkUrl":"https://www.youtube.com/watch?v=wjZofJX0v4M","checkboxState":"checked","id":"line-6"},"line-7":{"parentId":"line-0","startX":956.7948813057047,"startY":703.3164590561464,"length":-436.282610093161,"relativeDirection":-1,"text":":drawer: Misc","textPosRatio":0.8541303697356823,"textPerpOffset":-25.353216590642045,"thickness":1.8238578349939896,"color":"default","textColor":"default","children":["line-8","line-12","line-13","line-17"],"offsetRatioOnParent":0.4094293943216111,"fontSize":22,"isBold":false,"isCentered":true,"linkUrl":null,"checkboxState":null,"id":"line-7"},"line-8":{"parentId":"line-7","startX":998.140615786085,"startY":788.9977238591974,"length":-452.36399769406046,"relativeDirection":1,"text":"MIT 6.S191 (Google): Large Language Models","textPosRatio":0.5125015289225485,"textPerpOffset":-23.432473387471656,"thickness":1.8238578349939896,"color":"default","textColor":"default","children":["line-14"],"offsetRatioOnParent":0.21805917034102854,"fontSize":16,"isBold":false,"isCentered":true,"linkUrl":"https://www.youtube.com/watch?v=ZNodOsz94cc&list=WL&index=64","checkboxState":"unchecked","id":"line-8"},"line-9":{"parentId":"line-1","startX":345.20641473820245,"startY":315.24792417878064,"length":353.37015047637544,"relativeDirection":1,"text":"The Illustrated Transformer","textPosRatio":0.4903354914245231,"textPerpOffset":-27.357867524909846,"thickness":2.43140508087483,"color":"default","textColor":"default","children":[],"offsetRatioOnParent":0.8388721329013783,"fontSize":16,"isBold":false,"isCentered":true,"linkUrl":"https://jalammar.github.io/illustrated-transformer/","checkboxState":"unchecked","id":"line-9"},"line-10":{"parentId":"line-2","startX":730.1693953454977,"startY":645.3141130016762,"length":506.77555990891614,"relativeDirection":1,"text":"Visualizing A Neural Machine Translation Model (Mechanics of Seq2seq Models With Attention)","textPosRatio":0.508334603719653,"textPerpOffset":-30.000000000000004,"thickness":2.43140508087483,"color":"default","textColor":"default","children":[],"offsetRatioOnParent":0.35030615738284343,"fontSize":16,"isBold":false,"isCentered":true,"linkUrl":"https://jalammar.github.io/visualizing-neural-machine-translation-mechanics-of-seq2seq-models-with-attention/","checkboxState":"unchecked","id":"line-10"},"line-11":{"parentId":"line-2","startX":619.023527534823,"startY":414.9851890791781,"length":506.77555990891614,"relativeDirection":1,"text":"[2017] Attention is all you need","textPosRatio":0.5,"textPerpOffset":-13.678933762454923,"thickness":2.43140508087483,"color":"default","textColor":"yellow","children":[],"offsetRatioOnParent":0.9446728740794913,"fontSize":16,"isBold":false,"isCentered":true,"linkUrl":"https://arxiv.org/abs/1706.03762","checkboxState":"unchecked","id":"line-11"},"line-12":{"parentId":"line-7","startX":1026.0946090517295,"startY":846.92712164104,"length":381.4232699068832,"relativeDirection":1,"text":"Learning LLMs in 2025","textPosRatio":0.49591360581250055,"textPerpOffset":-30.04781399644462,"thickness":1.8238578349939896,"color":"default","textColor":"default","children":[],"offsetRatioOnParent":0.36548972529023827,"fontSize":16,"isBold":false,"isCentered":true,"linkUrl":"https://gist.github.com/yoavg/95bbc5768cacd2bf07187779fada4867","checkboxState":"unchecked","id":"line-12"},"line-13":{"parentId":"line-7","startX":1054.664954762728,"startY":906.1337940376902,"length":404.53805383103753,"relativeDirection":1,"text":":flask: [2025] The Illusion of Thinking","textPosRatio":0.486132582466087,"textPerpOffset":-18.55070999222916,"thickness":1.8238578349939896,"color":"default","textColor":"yellow","children":[],"offsetRatioOnParent":0.516170949372809,"fontSize":16,"isBold":false,"isCentered":true,"linkUrl":"https://ml-site.cdn-apple.com/papers/the-illusion-of-thinking.pdf","checkboxState":"unchecked","id":"line-13"},"line-14":{"parentId":"line-8","startX":629.1067413972894,"startY":967.0760542832118,"length":225.2762729089603,"relativeDirection":1,"text":"More material from the course","textPosRatio":0.5065306412057436,"textPerpOffset":-24.944404780115665,"thickness":1.8238578349939896,"color":"default","textColor":"default","children":[],"offsetRatioOnParent":0.9058047392126222,"fontSize":16,"isBold":false,"isCentered":true,"linkUrl":"https://introtodeeplearning.com/","checkboxState":null,"id":"line-14"},"line-15":{"parentId":"line-0","startX":1413.0426766296368,"startY":483.15280663944566,"length":-451.68578539484764,"relativeDirection":-1,"text":":music-note: Finetuning","textPosRatio":0.5,"textPerpOffset":-15.000000000000002,"thickness":2.0000000000000004,"color":"default","textColor":"default","children":["line-16"],"offsetRatioOnParent":0.6334290406822376,"fontSize":16,"isBold":false,"isCentered":true,"linkUrl":null,"checkboxState":null,"id":"line-15"},"line-16":{"parentId":"line-15","startX":1455.0004470959336,"startY":570.102401006292,"length":476.59253164340953,"relativeDirection":1,"text":"[2022] InstructGPT: Training language models to follow instructions with human feedback","textPosRatio":0.46845274789260216,"textPerpOffset":-23.517960309760113,"thickness":2.0000000000000004,"color":"default","textColor":"yellow","children":[],"offsetRatioOnParent":0.21374084699968382,"fontSize":16,"isBold":false,"isCentered":true,"linkUrl":"https://arxiv.org/pdf/2203.02155","checkboxState":null,"id":"line-16","textRenderLength":42},"line-17":{"parentId":"line-7","startX":1082.2968520010218,"startY":963.3957083328253,"length":418.8209059870814,"relativeDirection":1,"text":":flask: [2018] Improving Language Understanding by Generative Pre-Training","textPosRatio":0.4781835498922526,"textPerpOffset":-24.91495749898357,"thickness":2.0000000000000004,"color":"default","textColor":"yellow","children":[],"offsetRatioOnParent":0.6619027561106994,"fontSize":16,"isBold":false,"isCentered":true,"linkUrl":"https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf","checkboxState":"unchecked","id":"line-17","textRenderLength":29},"line-18":{"parentId":"line-1","startX":371.0181899006682,"startY":368.7379775186602,"length":465.0554752356362,"relativeDirection":1,"text":"[2019] BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding","textPosRatio":0.41951754239904726,"textPerpOffset":-26.806567537069338,"thickness":2.0000000000000004,"color":"default","textColor":"yellow","children":[],"offsetRatioOnParent":0.7578994298693148,"fontSize":16,"isBold":false,"isCentered":true,"linkUrl":"https://arxiv.org/pdf/1810.04805","checkboxState":"unchecked","id":"line-18","textRenderLength":37},"line-19":{"parentId":"line-2","startX":778.1158669704253,"startY":744.6741650916157,"length":516.3053676394967,"relativeDirection":1,"text":"[2022] FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness","textPosRatio":0.4998236687693989,"textPerpOffset":-32.32198780990192,"thickness":2.0000000000000004,"color":"default","textColor":"yellow","children":[],"offsetRatioOnParent":0.09390627965243444,"fontSize":16,"isBold":false,"isCentered":true,"linkUrl":"https://arxiv.org/pdf/2205.14135","checkboxState":"unchecked","id":"line-19","textRenderLength":37},"line-20":{"parentId":"line-4","startX":372.1397795454194,"startY":632.0511914461459,"length":-336.21620414848064,"relativeDirection":1,"text":"[2013] Efficient Estimation of Word Representations in Vector Space","textPosRatio":0.5066074041583831,"textPerpOffset":-24.91629981039555,"thickness":2.0000000000000004,"color":"default","textColor":"yellow","children":[],"offsetRatioOnParent":0.7783955602482203,"fontSize":16,"isBold":false,"isCentered":true,"linkUrl":"https://arxiv.org/pdf/1301.3781","checkboxState":null,"id":"line-20","textRenderLength":27}},"postIts":{"postit-0":{"id":"postit-0","title":"","content":"LLMFS: LLMs from scratch","color":"transp-1","fontSizePercent":120,"savedWidth":186,"savedHeight":50,"offsetRatioOnMainLine":0.16014850236151387,"perpDistRatioFromMainLine":-0.3325606460729615},"postit-1":{"id":"postit-1","title":"","content":"HOLM: Hands on LLM","color":"transp-1","fontSizePercent":100,"savedWidth":133,"savedHeight":50,"offsetRatioOnMainLine":0.13812644178291938,"perpDistRatioFromMainLine":-0.30912363162015566}},"drawings":[],"mainLineReference":{"id":"line-0","length":2261.5689630488023}}
+PINTA_DIAGRAM_DATA_END -->
+
+</body>
+</html>
