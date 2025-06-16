@@ -26,7 +26,8 @@
       "checkboxState": null,
       "textRenderLength": null,
       "angle": -25.75976175370454,
-      "id": "line-0"
+      "id": "line-0",
+      "textShadow": true
     },
     "line-1": {
       "parentId": "line-0",
@@ -54,7 +55,8 @@
       "linkUrl": null,
       "checkboxState": null,
       "textRenderLength": null,
-      "id": "line-1"
+      "id": "line-1",
+      "textShadow": true
     },
     "line-2": {
       "parentId": "line-1",
@@ -497,7 +499,8 @@
       "linkUrl": null,
       "checkboxState": null,
       "textRenderLength": null,
-      "id": "line-22"
+      "id": "line-22",
+      "textShadow": true
     },
     "line-23": {
       "parentId": "line-22",
@@ -1473,7 +1476,8 @@
       "linkUrl": null,
       "checkboxState": null,
       "textRenderLength": null,
-      "id": "line-75"
+      "id": "line-75",
+      "textShadow": true
     },
     "line-76": {
       "parentId": "line-75",
@@ -2176,7 +2180,8 @@
       "linkUrl": null,
       "checkboxState": null,
       "textRenderLength": null,
-      "id": "line-107"
+      "id": "line-107",
+      "textShadow": true
     },
     "line-108": {
       "parentId": "line-107",
