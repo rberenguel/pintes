@@ -30839,7 +30839,7 @@ THE SOFTWARE.
         // This is the processed content of diagram.js
         // js/modules/diagram.js
 
-import { highlightNodeInEditor, clearHighlightInEditor } from "./editor.js";
+
 const svg = d3.select("#diagram-container");
 const svgElement = document.querySelector(".diagram-pane");
 let width = svgElement.clientWidth;
@@ -30853,7 +30853,7 @@ let iconMap = {}; // This will hold the map loaded by main.js
 
 svg.on("click", (event) => {
   if (event.target === svg.node()) {
-    clearHighlightInEditor();
+    () => {};
   }
 });
 
@@ -31068,7 +31068,7 @@ function drag(simulation) {
 
 const zoom = d3
   .zoom()
-  .scaleExtent([0.001, 3])
+  .scaleExtent([0.2, 3])
   .on("zoom", ({ transform }) => zoomGroup.attr("transform", transform))
   .filter((event) => !event.target.closest(".prose-content"));
 svg.call(zoom).call(zoom.scaleTo, 0.8);
@@ -31076,7 +31076,7 @@ svg.call(zoom).call(zoom.scaleTo, 0.8);
 function updateDiagram(newData) {
   const oldNodeMap = new Map(nodes.map((d) => [d.id, d]));
   nodes = newData.map((d) => Object.assign(oldNodeMap.get(d.id) || {}, d));
-  
+
   links = [];
   newData.forEach((d) => {
     if (d.parentRelations) {
@@ -31139,7 +31139,7 @@ function updateDiagram(newData) {
         } else {
           // Otherwise, perform the standard node click action.
           event.stopPropagation();
-          highlightNodeInEditor(d.id);
+          (() => {})(d.id);
           if (event.defaultPrevented || !d.prose) return;
           d.expanded = !d.expanded;
           if (d.expanded) {
@@ -31241,13 +31241,13 @@ function updateDiagram(newData) {
         "nodeStyle": "stroke: red;"
       },
       "title": ":journal: Less is More:\\nRecursive Reasoning\\nwith Tiny Networks",
-      "x": 249.4895946621261,
-      "y": 359.7199833734294,
+      "x": 403.9327986244002,
+      "y": 473.38810144550797,
       "width": 247,
       "height": 86,
       "index": 0,
-      "vy": 0.043370787771220685,
-      "vx": 0.03438523556606861
+      "vy": 0.05613274617312412,
+      "vx": 0.04582858370541764
     },
     {
       "id": "LIMSingleNetwork",
@@ -31255,13 +31255,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "Single network",
-      "x": -387.9903546285063,
-      "y": 124.90053605325743,
+      "x": -235.73231112657484,
+      "y": 241.2571003244674,
       "width": 166,
       "height": 50,
       "index": 1,
-      "vy": 0.037505946614294544,
-      "vx": 0.019787493846621367
+      "vy": 0.049215910993029424,
+      "vx": 0.02729670577185972
     },
     {
       "id": "LIMTwoLayer",
@@ -31275,13 +31275,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "Two layers",
-      "x": -717.3510341094798,
-      "y": 75.17216222887605,
+      "x": -565.5938500192902,
+      "y": 188.90381459822572,
       "width": 130,
       "height": 50,
       "index": 2,
-      "vy": -0.008181513477516032,
-      "vx": 0.025266920825906106
+      "vy": -0.009788980583546112,
+      "vx": 0.033133678579288346
     },
     {
       "id": "HRMTwoModules",
@@ -31305,13 +31305,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "Two modules",
-      "x": 117.20567830038311,
-      "y": 551.3087352813808,
+      "x": 271.100190069777,
+      "y": 664.5305510390269,
       "width": 139,
       "height": 50,
       "index": 3,
-      "vy": 0.04733353176952455,
-      "vx": 0.023179862820262298
+      "vy": 0.059869179201387915,
+      "vx": 0.029366002512472456
     },
     {
       "id": "LIMHz",
@@ -31325,13 +31325,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "y: current solution",
-      "x": -545.5151385081067,
-      "y": 290.47269430051,
+      "x": -390.8280788435737,
+      "y": 409.11716169550954,
       "width": 211,
       "height": 50,
       "index": 4,
-      "vy": 0.01522602001490383,
-      "vx": -0.0009726102036177117
+      "vy": 0.023355582069830582,
+      "vx": 0.002624637303310355
     },
     {
       "id": "HRMHighLevelModule",
@@ -31355,13 +31355,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "High level module",
-      "x": -49.455355075715396,
-      "y": 430.36888685073654,
+      "x": 104.77752012264271,
+      "y": 543.1317393014203,
       "width": 193,
       "height": 50,
       "index": 5,
-      "vy": 0.02408345998202084,
-      "vx": 0.03236678986464847
+      "vy": 0.031251915785176054,
+      "vx": 0.0423662050358256
     },
     {
       "id": "LIMLz",
@@ -31375,13 +31375,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "z: hidden features",
-      "x": -200.26223981298722,
-      "y": 247.0089024152431,
+      "x": -45.46339444274514,
+      "y": 359.348446548149,
       "width": 202,
       "height": 50,
       "index": 6,
-      "vy": 0.011012303680966602,
-      "vx": 0.04046282012453802
+      "vy": 0.013699069375872685,
+      "vx": 0.05339470182725033
     },
     {
       "id": "HRMLowLevelModule",
@@ -31405,13 +31405,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "Low level module",
-      "x": -329.983256450017,
-      "y": 769.4037234745877,
+      "x": -176.70094112508937,
+      "y": 881.3909393231035,
       "width": 184,
       "height": 50,
       "index": 7,
-      "vy": -0.0017179616303609271,
-      "vx": 0.003677175611830494
+      "vy": -0.0038109924765350536,
+      "vx": 0.003586041398036366
     },
     {
       "id": "LIMFullBackprop",
@@ -31425,13 +31425,13 @@ function updateDiagram(newData) {
       "prose": "<p>Massive improvements, from 56% to 87% on Sudoku</p>",
       "directives": {},
       "title": "Full backpropagation",
-      "x": 409.71396740625505,
-      "y": 581.3286519962784,
+      "x": 563.4524696786322,
+      "y": 695.4953586073508,
       "width": 220,
       "height": 50,
       "index": 8,
-      "vy": 0.05050331088844668,
-      "vx": 0.02736136523653573
+      "vy": 0.06537979812054912,
+      "vx": 0.036498413577712586
     },
     {
       "id": "HRMTrainingOneStep",
@@ -31455,13 +31455,13 @@ function updateDiagram(newData) {
       "prose": "<p>The model runs its full forward pass (all N×T steps) without tracking gradients.</p><p>Then, it performs just one final step where gradients are calculated and propagated</p><p>backward. This keeps the memory footprint constant (O(1)) regardless of the number</p><p>of steps.</p>",
       "directives": {},
       "title": "One step gradient",
-      "x": 128.86146707898064,
-      "y": 1002.8913327430176,
+      "x": 304.42944295041497,
+      "y": 1122.6679266707554,
       "width": 193,
       "height": 50,
       "index": 9,
-      "vy": 0.05230513442434789,
-      "vx": 0.0047664104224419655
+      "vy": 0.07054416191495667,
+      "vx": 0.01765479651368799
     },
     {
       "id": "HRM",
@@ -31477,13 +31477,13 @@ function updateDiagram(newData) {
         "nodeStyle": "stroke: red;"
       },
       "title": ":journal: Hierarchical\\nreasoning model",
-      "x": 209.1926177528404,
-      "y": 760.3365197860016,
+      "x": 362.39587300888036,
+      "y": 873.8384448340523,
       "width": 238,
       "height": 68,
       "index": 10,
-      "vy": 0.057855336264825134,
-      "vx": 0.01973616282329862
+      "vy": 0.07186789091765014,
+      "vx": 0.025137504725473686
     },
     {
       "id": "HRMHiddenState",
@@ -31532,13 +31532,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "Hidden state",
-      "x": -73.22243169909059,
-      "y": 944.3277205124898,
+      "x": 105.14071572878494,
+      "y": 1055.4231571867156,
       "width": 148,
       "height": 50,
       "index": 11,
-      "vy": 0.03789967208719708,
-      "vx": 0.003395456057869275
+      "vy": 0.05053141035387737,
+      "vx": 0.01490828324950809
     },
     {
       "id": "BPTT",
@@ -31557,13 +31557,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "Backpropagation\\nthrough time",
-      "x": 118.71750244453524,
-      "y": 1272.96024483281,
+      "x": 260.70030248464906,
+      "y": 1386.6550951101865,
       "width": 175,
       "height": 68,
       "index": 12,
-      "vy": 0.0468716699053768,
-      "vx": -0.024297616688193246
+      "vy": 0.059503051733385035,
+      "vx": -0.03374207555766596
     },
     {
       "id": "HRMTraining",
@@ -31592,13 +31592,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "Training",
-      "x": -20.279738458369845,
-      "y": 1124.4312159754468,
+      "x": 141.1950112840685,
+      "y": 1224.494089644793,
       "width": 112,
       "height": 50,
       "index": 13,
-      "vy": 0.04356917807988013,
-      "vx": -0.009821823301878238
+      "vy": 0.04991951867385966,
+      "vx": -0.0021962537376411864
     },
     {
       "id": "HRMSegments",
@@ -31627,13 +31627,13 @@ function updateDiagram(newData) {
       "prose": "<p>N cycles of T steps</p>",
       "directives": {},
       "title": "Segments",
-      "x": 254.03991817789,
-      "y": 1149.0244062122322,
+      "x": 411.68213032893783,
+      "y": 1282.3635176440182,
       "width": 112,
       "height": 50,
       "index": 14,
-      "vy": 0.06714007816514178,
-      "vx": -0.005731164467998909
+      "vy": 0.0963884275875134,
+      "vx": -0.00825494088992618
     },
     {
       "id": "HRMRNN",
@@ -31652,13 +31652,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "RNN",
-      "x": 471.29610779067514,
-      "y": 1149.4683831245402,
+      "x": 624.3598378538856,
+      "y": 1255.3392113373413,
       "width": 67,
       "height": 50,
       "index": 15,
-      "vy": 0.07683642655991618,
-      "vx": 0.018324161220606008
+      "vy": 0.0950785771546,
+      "vx": 0.02020929478818885
     },
     {
       "id": "DEQ",
@@ -31677,13 +31677,13 @@ function updateDiagram(newData) {
       "prose": "<p>Based on using the implicit function theorem, coming from the paper</p><p><li><a href=\"https://arxiv.org/abs/2111.05177\">On Training Implicit Models</a></li></p>",
       "directives": {},
       "title": "Deep equilibrium models",
-      "x": 404.596607735118,
-      "y": 964.1034011460576,
+      "x": 568.8415867781282,
+      "y": 1066.3240696243179,
       "width": 247,
       "height": 50,
       "index": 16,
-      "vy": 0.07960797044243992,
-      "vx": 0.010621136457451717
+      "vy": 0.0949347035432179,
+      "vx": 0.0206991170250365
     },
     {
       "id": "RoPE",
@@ -31702,13 +31702,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "Rotary Positional Encoding",
-      "x": -313.9095663323299,
-      "y": 500.7662128105031,
+      "x": -159.9385249596312,
+      "y": 612.7469912858754,
       "width": 274,
       "height": 50,
       "index": 17,
-      "vy": 0.0062681258766505085,
-      "vx": 0.03630380652197539
+      "vy": 0.0075168182110135345,
+      "vx": 0.047707367442366866
     },
     {
       "id": "GLU",
@@ -31727,13 +31727,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "GLU",
-      "x": -367.3298340762166,
-      "y": 297.2592956464094,
+      "x": -212.6741849540297,
+      "y": 409.0965961436346,
       "width": 67,
       "height": 50,
       "index": 18,
-      "vy": 0.0013095849848179797,
-      "vx": 0.03556487132396194
+      "vy": 0.0006665477244267026,
+      "vx": 0.047137226504561994
     },
     {
       "id": "EncodingOnlyTransformer",
@@ -31752,13 +31752,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "Encoding only transformer",
-      "x": -75.37136597532202,
-      "y": 697.9198857163515,
+      "x": 78.06093455124768,
+      "y": 810.5403499680192,
       "width": 265,
       "height": 50,
       "index": 19,
-      "vy": 0.03359932000045571,
-      "vx": 0.0159548373485121
+      "vy": 0.043505104746929105,
+      "vx": 0.020510360462251756
     },
     {
       "id": "HRMSameArchAndDim",
@@ -31777,13 +31777,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "Same architecture\\nand dimensions",
-      "x": 34.69996995424161,
-      "y": 213.3048969864759,
+      "x": 189.56615218658627,
+      "y": 326.3732956508076,
       "width": 193,
       "height": 68,
       "index": 20,
-      "vy": 0.018810076176765677,
-      "vx": 0.04839011590600038
+      "vy": 0.02503621322136176,
+      "vx": 0.06370196218391953
     },
     {
       "id": "ArtScalingRL",
@@ -31793,13 +31793,13 @@ function updateDiagram(newData) {
         "nodeStyle": "stroke: red;"
       },
       "title": ":journal: The Art of scaling\\nreinforcement learning",
-      "x": 1339.632357462009,
-      "y": 78.48944381265373,
+      "x": 1488.8504609299966,
+      "y": 191.46444511961263,
       "width": 292,
       "height": 68,
       "index": 21,
-      "vy": -0.0014722695861630935,
-      "vx": 0.006337371996592293
+      "vy": -0.0018800567537972156,
+      "vx": 0.00817983740544717
     },
     {
       "id": "ArtScalingRLModel",
@@ -31813,13 +31813,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "Model",
-      "x": 1147.3969368887335,
-      "y": 405.30180028950514,
+      "x": 1296.5530771718568,
+      "y": 519.4081137382992,
       "width": 85,
       "height": 50,
       "index": 22,
-      "vy": 0.000379802928531084,
-      "vx": 0.010637618140487762
+      "vy": 0.0004851053827626292,
+      "vx": 0.013822826078523058
     },
     {
       "id": "ArtScalingRLGenerators",
@@ -31838,13 +31838,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "Generators",
-      "x": 1334.6091285066695,
-      "y": 619.0860392571137,
+      "x": 1484.4415109672339,
+      "y": 732.3645320926543,
       "width": 130,
       "height": 50,
       "index": 23,
-      "vy": 0.0032853019630110745,
-      "vx": 0.010471113483146138
+      "vy": 0.004241542901480126,
+      "vx": 0.013610927951687623
     },
     {
       "id": "ArtScalingRLPolicy",
@@ -31870,13 +31870,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "Policy",
-      "x": 1162.3688287710709,
-      "y": 709.7392052576156,
+      "x": 1312.5188165283805,
+      "y": 823.5896070032333,
       "width": 94,
       "height": 50,
       "index": 24,
-      "vy": 0.0011037981696387048,
-      "vx": 0.009963645736440487
+      "vy": 0.0014943928969099521,
+      "vx": 0.01298495251439449
     },
     {
       "id": "ArtScalingRLTrainers",
@@ -31897,13 +31897,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "Trainers",
-      "x": 1417.0942295551222,
-      "y": 809.7033336794186,
+      "x": 1567.4862892630647,
+      "y": 922.7379419273188,
       "width": 112,
       "height": 50,
       "index": 25,
-      "vy": 0.00493110273631575,
-      "vx": 0.00844508344327378
+      "vy": 0.006414507867371023,
+      "vx": 0.010995673487574378
     },
     {
       "id": "ArtScalingRLTraining",
@@ -31917,13 +31917,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "Training",
-      "x": 1594.0433719960924,
-      "y": 603.1929558965397,
+      "x": 1743.7747761652797,
+      "y": 715.6834109727644,
       "width": 112,
       "height": 50,
       "index": 26,
-      "vy": 0.004131983293717834,
-      "vx": 0.004584000887516706
+      "vy": 0.005354167725008992,
+      "vx": 0.005975276866421667
     },
     {
       "id": "ArtScalingRLLosses",
@@ -31937,13 +31937,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "Losses",
-      "x": 1142.6232733528639,
-      "y": 202.89579292029197,
+      "x": 1291.774296557168,
+      "y": 315.7651661516933,
       "width": 94,
       "height": 50,
       "index": 27,
-      "vy": 0.0003237397032332511,
-      "vx": 0.00754071223193771
+      "vy": 0.0005656541831101508,
+      "vx": 0.009813533544070805
     },
     {
       "id": "GRPO",
@@ -31957,13 +31957,13 @@ function updateDiagram(newData) {
       "prose": "<p>Group Relative Policy Optimization</p><p>Look at a group (batch) of answers and update the model based on that.</p>",
       "directives": {},
       "title": "GRPO",
-      "x": 1267.7260934807425,
-      "y": 398.9953572938093,
+      "x": 1416.7510484987065,
+      "y": 510.9979950063073,
       "width": 76,
       "height": 50,
       "index": 28,
-      "vy": 0.00016074308857668253,
-      "vx": 0.010926319013189606
+      "vy": 0.00032011705704084684,
+      "vx": 0.014242020089155328
     },
     {
       "id": "DAPO",
@@ -31977,13 +31977,13 @@ function updateDiagram(newData) {
       "prose": "<p>Decoupled clip and Dynamic Sampling Policy Optimization</p><p>Asymmetric clipping. The limits to increase/decrease the probability of a token are different.</p><p>Aggregates the loss at the prompt level, regardless of how long the answers might be.</p>",
       "directives": {},
       "title": "DAPO",
-      "x": 1331.887057808377,
-      "y": 302.354938009168,
+      "x": 1482.4124586309836,
+      "y": 415.37070188312936,
       "width": 76,
       "height": 50,
       "index": 29,
-      "vy": -0.001363609725252036,
-      "vx": 0.008630384472263108
+      "vy": -0.0017282251005436193,
+      "vx": 0.011259000455023132
     },
     {
       "id": "CISPO",
@@ -32007,13 +32007,13 @@ function updateDiagram(newData) {
       "prose": "<p>Clipped Importance Sampling Policy Optimization</p><p>Adds importance sampling.</p>",
       "directives": {},
       "title": "CISPO",
-      "x": 1477.7712444799402,
-      "y": 260.507832205601,
+      "x": 1627.3846419699796,
+      "y": 373.1828964600512,
       "width": 85,
       "height": 50,
       "index": 30,
-      "vy": -0.00222304756706841,
-      "vx": 0.007175243009624129
+      "vy": -0.002888874458116017,
+      "vx": 0.009301201653437171
     },
     {
       "id": "ArtScalingRLFP32",
@@ -32027,13 +32027,13 @@ function updateDiagram(newData) {
       "prose": "<p>This is because training and inference kernels would otherwise return slightly different values and this would really impact badly the process.</p>",
       "directives": {},
       "title": "FP32",
-      "x": 1610.6638859053296,
-      "y": 358.2757509084926,
+      "x": 1760.2436564194275,
+      "y": 470.7035175890127,
       "width": 76,
       "height": 50,
       "index": 31,
-      "vy": -0.0066774392520114936,
-      "vx": 0.0036906147711211652
+      "vy": -0.00863091784899342,
+      "vx": 0.004805827368517455
     },
     {
       "id": "LMHead",
@@ -32047,13 +32047,13 @@ function updateDiagram(newData) {
       "prose": "<p>In a transformer, after attention and processing, the very last layer (usually) a simple linear layer) that takes the internal representation and projects into the vocabulary vector is called the LM Head (Language Model Head).</p>",
       "directives": {},
       "title": "LM Head",
-      "x": 1734.9265459650878,
-      "y": 646.7979688664554,
+      "x": 1884.6976640590613,
+      "y": 759.1366562156245,
       "width": 103,
       "height": 50,
       "index": 32,
-      "vy": -0.003898839511075884,
-      "vx": 0.00833175524793973
+      "vy": -0.005088549035122324,
+      "vx": 0.010830976334719637
     },
     {
       "id": "ArtScalingRLScaleRL",
@@ -32067,13 +32067,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "ScaleRL Recipe",
-      "x": 1623.7667853224154,
-      "y": 90.1280198434824,
+      "x": 1773.1237168041287,
+      "y": 202.61203429136043,
       "width": 166,
       "height": 50,
       "index": 33,
-      "vy": -0.003365394030437338,
-      "vx": 0.0071046787194991076
+      "vy": -0.004379309666391033,
+      "vx": 0.009190965911526171
     },
     {
       "id": "ArtScalingRLScalePipelineRL",
@@ -32087,13 +32087,13 @@ function updateDiagram(newData) {
       "prose": "",
       "directives": {},
       "title": "Asynchronous\\nPipeline RL setup",
-      "x": 1781.440667886687,
-      "y": 322.4213154140704,
+      "x": 1931.0097581791854,
+      "y": 434.7982509650617,
       "width": 193,
       "height": 68,
       "index": 34,
-      "vy": 0.002367006051534015,
-      "vx": 0.005589798645487211
+      "vy": 0.00303266936379383,
+      "vx": 0.007258728710236008
     },
     {
       "id": "PPO",
@@ -32117,13 +32117,13 @@ function updateDiagram(newData) {
       "prose": "<p>Foundational RL algorithm.</p><p>Proximal Policy Optimization. Updates model weights based on rewards, without having a precise answer (i.e. we don't move some weights for some tokens, we have just a global \"yes\", \"no\".</p><p>In this scenario, Policy refers to the LLM (decides the next step). The Proximal part means that we are not going to nudge it far, regardless.</p><p>For this, uses clipping: Calculate P(word with new model)/ P(word with old model) and then clips it to be within a small range.</p>",
       "directives": {},
       "title": ":hammer: PPO",
-      "x": 1463.5839105701764,
-      "y": 475.2365552395779,
+      "x": 1612.813524014206,
+      "y": 588.0482625889322,
       "width": 148,
       "height": 50,
       "index": 35,
-      "vy": -0.002272512784030123,
-      "vx": 0.011795794285552217
+      "vy": -0.0028745794891716957,
+      "vx": 0.015338625051656273
     },
     {
       "id": "RLOffPolicy",
@@ -32137,13 +32137,13 @@ function updateDiagram(newData) {
       "prose": "<p>A perfect world would use <em>on-policy</em>, with each answer update the model is updaetd. Extremely slow.</p><p>In off-policy, the generators will use a somewhat older version.</p>",
       "directives": {},
       "title": "RL Off policy\\nalgorithms",
-      "x": 1897.8132051488656,
-      "y": 598.1365251207037,
+      "x": 2047.6396801793837,
+      "y": 710.6608980797357,
       "width": 157,
       "height": 68,
       "index": 36,
-      "vy": 0.004006657067522352,
-      "vx": 0.010693735685491352
+      "vy": 0.0051537685999564105,
+      "vx": 0.013878532303123888
     }
   ],
   "links": [
